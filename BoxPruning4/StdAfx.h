@@ -10,7 +10,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "..\Shared\StdAfx.h"
+#include "../Shared/StdAfx.h"
 
 namespace Meshmerizer
 {

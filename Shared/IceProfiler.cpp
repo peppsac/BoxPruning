@@ -18,11 +18,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Precompiled Header
-#include "Stdafx.h"
+#include "StdAfx.h"
 
 using namespace IceCore;
 
-static udword gBase = 0;
-void	IceCore::SetBaseTime(udword time)	{ gBase = time; }
-udword	IceCore::GetBaseTime()				{ return gBase; }
+static uint64_t gBase = 0;
+void		IceCore::SetBaseTime(uint64_t time)	{ gBase = time; }
+uint64_t	IceCore::GetBaseTime()				{ return gBase; }
 

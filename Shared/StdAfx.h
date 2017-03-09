@@ -10,7 +10,7 @@
 	#include <math.h>
 	#include <float.h>
 	#include <vector>
-	#include <intrin.h>
+	// #include <intrin.h>
 
 	/////////////
 
@@ -27,7 +27,9 @@
 		// - we can switch to __forceinline to check it's really better or not
 		// - we can remove __forceinline if the compiler doesn't support it
 		#define inline_				__forceinline
-	//	#define inline_				inline
+	#ifdef LINUX
+	#define __forceinline inline
+	#endif
 
 	/////////////
 

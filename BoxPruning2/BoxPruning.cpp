@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "StdAfx.h"
 
 #ifdef REMOVED
 
@@ -47,14 +47,14 @@ int main(int argc, char* argv[])
 	const udword NB = 16;
 
 	// 2) Do queries
-	udword Time;
+	uint64_t Time;
 	Axes axes;
 	axes.Axis0 = 0;
 	axes.Axis1 = 2;
 	axes.Axis2 = 1;
 	// 2-1) Brute-force
 	Container Pairs;
-	udword MinTime = 0xffffffff;
+	uint64_t MinTime = 0xffffffff;
 
 //	StartProfile(Time);
 	for(udword i=0;i<NB;i++)

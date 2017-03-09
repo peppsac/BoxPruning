@@ -1,5 +1,5 @@
-#include "Stdafx.h"
-#include <conio.h>
+#include <StdAfx.h> // use angle-bracket to disable local directory header search
+// #include <conio.h>
 
 static const bool gPresortBounds = false;
 
@@ -69,7 +69,7 @@ static void RunPerformanceTest()
 
 		RadixSort RS;
 		const udword* Sorted = RS.Sort(PosList, NbBoxes).GetRanks();
-		
+
 		AABB* Copy = new AABB[NbBoxes];
 		memcpy(Copy, Boxes, sizeof(AABB)*NbBoxes);
 
@@ -101,7 +101,7 @@ static void RunPerformanceTest()
 	if(1)
 	{
 		udword MinTime = 0xffffffff;
-		udword Time;
+		uint64_t Time;
 
 		if(1)
 		{
@@ -152,7 +152,7 @@ static void RunPerformanceTest()
 			EndProfile(Time);
 			if(Time<MinTime)
 				MinTime = Time;
-			printf(" %d K-cycles.\n", Time/1024);
+			printf(" %lu K-cycles.\n", Time/1024);
 		}
 #ifdef USE_STL
 		printf("Complete test (box pruning): found %d intersections in %d K-cycles.\n", Pairs.size()>>1, MinTime/1024);
@@ -171,7 +171,7 @@ static void RunPerformanceTest()
 		const AABB* Boxes1 = Boxes + NbBoxes0;
 
 		udword MinTime = 0xffffffff;
-		udword Time;
+		uint64_t Time;
 
 		if(0)
 		{
@@ -288,7 +288,7 @@ static void RunValidityTest()
 
 			RadixSort RS;
 			const udword* Sorted = RS.Sort(PosList, NbBoxes).GetRanks();
-		
+
 			AABB* Copy = new AABB[NbBoxes];
 			memcpy(Copy, Boxes, sizeof(AABB)*NbBoxes);
 
@@ -537,7 +537,6 @@ int main(int argc, char* argv[])
 //	RunValidityTest();
 //	RunEdgeCase();
 
-	while(!_kbhit());
 
 	return 0;
 }

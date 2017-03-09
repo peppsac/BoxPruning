@@ -11,7 +11,7 @@
 #endif // _MSC_VER > 1000
 
 //#define USE_INTERSECT2
-#include "..\Shared\StdAfx.h"
+#include "../Shared/StdAfx.h"
 
 #define USE_HARDCODED_AXES
 #define USE_DIRECT_BOUNDS

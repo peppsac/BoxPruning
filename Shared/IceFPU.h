@@ -38,6 +38,9 @@
 	//! Fast square root for floating-point values.
 	inline_ float FastSqrt(float square)
 	{
+			#if LINUX
+			assert(false);
+			#else
 			float retval;
 
 			__asm {
@@ -48,6 +51,7 @@
 					mov             [retval], eax
 			}
 			return retval;
+			#endif
 	}
 
 	//! Saturates positive to zero.
@@ -71,8 +75,8 @@
 	//! Computes 1.0f / sqrtf(x). Comes from NVIDIA.
 	inline_ float InvSqrt(const float& x)
 	{
-		udword tmp = (udword(IEEE_1_0 << 1) + IEEE_1_0 - *(udword*)&x) >> 1;   
-		float y = *(float*)&tmp;                                             
+		udword tmp = (udword(IEEE_1_0 << 1) + IEEE_1_0 - *(udword*)&x) >> 1;
+		float y = *(float*)&tmp;
 		return y * (1.47f - 0.47f * x * y * y);
 	}
 
@@ -130,7 +134,7 @@
 		// location pointed to by pwOldCW.
 		{
 			uword wTemp, wSave;
- 
+
 			__asm fstcw wSave
 			if (wSave & 0x300 ||            // Not single mode
 				0x3f != (wSave & 0x3f) ||   // Exceptions enabled
@@ -162,6 +166,9 @@
 		return x*x < epsilon;
 	}
 
+	#if LINUX
+	// TODO
+	#else
 	#define FCOMI_ST0	_asm	_emit	0xdb	_asm	_emit	0xf0
 	#define FCOMIP_ST0	_asm	_emit	0xdf	_asm	_emit	0xf0
 	#define FCMOVB_ST0	_asm	_emit	0xda	_asm	_emit	0xc0
@@ -176,10 +183,14 @@
 	#define FCOMIP_ST2	_asm	_emit	0xdf	_asm	_emit	0xf2
 	#define FCMOVB_ST2	_asm	_emit	0xda	_asm	_emit	0xc2
 	#define FCMOVNB_ST2	_asm	_emit	0xdb	_asm	_emit	0xc2
+	#endif
 
 	//! A global function to find MAX(a,b,c) using FCOMI/FCMOV
 	inline_ float FCMax3(float a, float b, float c)
 	{
+		#if LINUX
+		assert(false);
+		#else
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]
@@ -191,11 +202,15 @@
 		_asm	fstp	[Res]
 		_asm	fcompp
 		return Res;
+		#endif
 	}
 
 	//! A global function to find MIN(a,b,c) using FCOMI/FCMOV
 	inline_ float FCMin3(float a, float b, float c)
 	{
+		#if LINUX
+		assert(false);
+		#else
 		float Res;
 		_asm	fld		[a]
 		_asm	fld		[b]
@@ -207,6 +222,7 @@
 		_asm	fstp	[Res]
 		_asm	fcompp
 		return Res;
+		#endif
 	}
 
 	inline_ int ConvertToSortable(float f)
