@@ -26,7 +26,7 @@ static bool BruteForceCompleteBoxTest(udword nb, const AABB** list, std::vector<
 }
 #endif
 
-static void RunPerformanceTest()
+static void RunPerformanceTest(bool bruteForce, bool boxPruning)
 {
 	const udword NbBoxes = 10000;
 
@@ -103,7 +103,7 @@ static void RunPerformanceTest()
 		udword MinTime = 0xffffffff;
 		uint64_t Time;
 
-		if(1)
+		if(bruteForce)
 		{
 			// Brute-force
 //			for(udword i=0;i<NB;i++)
@@ -126,39 +126,43 @@ static void RunPerformanceTest()
 #endif
 		}
 
-		// Optimized
-		MinTime = 0xffffffff;
-		for(udword i=0;i<NB;i++)
+		if (boxPruning)
 		{
-#ifdef USE_STL
-				Pairs.clear();
-//				Pairs.shrink_to_fit();
-//				printf("capa: %d\n", Pairs.capacity());
-#else
-				Pairs.Reset();
-#endif
-
-			StartProfile(Time);
-#ifdef USE_HARDCODED_AXES
-	#ifdef USE_DIRECT_BOUNDS
-//				CompleteBoxPruningSTL(NbBoxes, Boxes, STLPairs);
-				CompleteBoxPruning(NbBoxes, Boxes, Pairs);
+			// Optimized
+			MinTime = 0xffffffff;
+			for(udword i=0;i<NB;i++)
+			{
+	#ifdef USE_STL
+					Pairs.clear();
+	//				Pairs.shrink_to_fit();
+	//				printf("capa: %d\n", Pairs.capacity());
 	#else
-				CompleteBoxPruning(NbBoxes, List, Pairs);
+					Pairs.Reset();
 	#endif
-#else
-				CompleteBoxPruning(NbBoxes, List, Pairs, axes);
-#endif
-			EndProfile(Time);
-			if(Time<MinTime)
-				MinTime = Time;
-			printf(" %lu K-cycles.\n", Time/1024);
+
+				StartProfile(Time);
+	#ifdef USE_HARDCODED_AXES
+		#ifdef USE_DIRECT_BOUNDS
+	//				CompleteBoxPruningSTL(NbBoxes, Boxes, STLPairs);
+					CompleteBoxPruning(NbBoxes, Boxes, Pairs);
+		#else
+					CompleteBoxPruning(NbBoxes, List, Pairs);
+		#endif
+	#else
+					CompleteBoxPruning(NbBoxes, List, Pairs, axes);
+	#endif
+				EndProfile(Time);
+				if(Time<MinTime)
+					MinTime = Time;
+				printf(" %lu K-cycles.\n", Time/1024);
+			}
+	#ifdef USE_STL
+			printf("Complete test (box pruning): found %d intersections in %d K-cycles.\n", Pairs.size()>>1, MinTime/1024);
+	#else
+			printf("Complete test (box pruning): found %d intersections in %d K-cycles.\n", Pairs.GetNbEntries()>>1, MinTime/1024);
+	#endif
+
 		}
-#ifdef USE_STL
-		printf("Complete test (box pruning): found %d intersections in %d K-cycles.\n", Pairs.size()>>1, MinTime/1024);
-#else
-		printf("Complete test (box pruning): found %d intersections in %d K-cycles.\n", Pairs.GetNbEntries()>>1, MinTime/1024);
-#endif
 	}
 
 #ifndef USE_STL
@@ -533,7 +537,12 @@ static void RunValidityTest()
 
 int main(int argc, char* argv[])
 {
-	RunPerformanceTest();
+	bool bruteForce = (argc == 2) && strcmp(argv[1], "brute-force") == 0;
+	bool boxPruning = (argc == 2) && strcmp(argv[1], "box-pruning") == 0;
+	if (!bruteForce && !boxPruning) {
+		bruteForce = boxPruning = true;
+	}
+	RunPerformanceTest(bruteForce, boxPruning);
 //	RunValidityTest();
 //	RunEdgeCase();
 
