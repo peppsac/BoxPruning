@@ -27,8 +27,6 @@ build() {
 
 _run_impl() {
 	result=`./build/${1}/BoxPruning${1} ${2} | grep found`
-	OLD=$IFS
-	IFS=$'\n'
 	return_value=""
 	for line in $result
 	do
@@ -38,15 +36,17 @@ _run_impl() {
 		cycles=`echo $line|cut -d\  -f9`
 		return_value="$return_value;$1,$algo,$intersect,$cycles"
 	done
-	IFS=$OLD
 	echo ${return_value:1}
 }
 
-perf_stats="branches branch-misses cache-misses instructions cycles"
+perf_stats="branches branch-misses cache-references cache-misses cycles instructions"
 
 run() {
 	if [ -d "build/$1" ]
 	then
+		old=$IFS
+		IFS=$'\n'
+
 		folder=build/$1
 		_run_impl $1 "brute-force"
 
@@ -73,13 +73,24 @@ run() {
 		) 2>&1)
 
 		str_stats=""
+		prev=''
 		for stat in $stats
 		do
 			value=`echo $stat | cut -d/ -f1`
-			str_stats="$str_stats $value"
+			percentage=''
+			name=`echo $stat | cut -d/ -f3`
+			case "$name" in
+				"branch-misses"|"cache-misses"|"instructions")
+					percentage=$(( (100 * $value) / $prev ))
+				;;
+			esac
+			str_stats="$str_stats $value $percentage"
+			prev=$value
 		done
+
 		echo "version $1 (3 run average): $r"
 		echo "$1 $r $str_stats" >> last_run.csv
+		IFS=$OLD
 	else
 		echo "Version $1 not built"
 		exit 1
@@ -88,16 +99,16 @@ run() {
 
 
 plot_command() {
-	cmd="set multiplot layout 3,2; set grid; set style data lines; set style line 1 linewidth 3; set style data histogram;"
+	cmd="set xtics font ',6' ; set multiplot layout 3,2; set grid; set style data lines; set style fill solid 0.5; set style line 1 linewidth 3; set style data histogram; set format y '%.0s %c'; set y2tics;"
 
 
-	count=3
-	for stat in $perf_stats
-	do
-		fixed=`echo ${stat^^}|sed 's/-/_/g'`
-		cmd=$cmd"stats '< sort -k1 last_run.csv' using $count name '$fixed' nooutput; "
-		count=$(( $count + 1 ))
-	done
+	# count=3
+	# for stat in $perf_stats
+	# do
+	# 	fixed=`echo ${stat^^}|sed 's/-/_/g'`
+	# 	cmd=$cmd"stats '< sort -k1 last_run.csv' using $count name '$fixed' nooutput; "
+	# 	count=$(( $count + 1 ))
+	# done
 
 
 	cmd="$cmd plot '< sort -k1 last_run.csv' using 2:xticlabels(1) title 'K-cycles(app)' axes x1y2; "
@@ -107,7 +118,25 @@ plot_command() {
 		fixed=`echo ${stat^^}|sed 's/-/_/g'`
 		# cmd=$cmd"'< sort -k1 last_run.csv' using 1:(delta1=\$$count-${fixed}_min, delta2=${fixed}_max-${fixed}_min, delta1/delta2) title '$stat',"
 		# cmd=$cmd" plot '< sort -k1 last_run.csv' using 1:$count title '$stat';"
-		cmd=$cmd" plot '< sort -k1 last_run.csv' using (\$$count/1024):xticlabels(1) title 'K-$stat';"
+
+		case "$stat" in
+			"branch-misses"|"cache-misses"|"instructions")
+				div=1
+				lbl='%'
+				if [[ "$stat" == "instructions" ]]
+				then
+					lbl='insn p. cy'
+					div=100
+				fi
+				p=$(( $count + 1 ))
+				cmd=${cmd:0:-1}", '< sort -k1 last_run.csv' using (\$$count):xticlabels(1) title '$stat', '< sort -k1 last_run.csv' using (\$$p / $div) title '$lbl' with lines axes x1y2;"
+				count=$(( $count + 1 ))
+				;;
+			*)
+				cmd=$cmd" plot '< sort -k1 last_run.csv' using (\$$count):xticlabels(1) title '$stat';"
+				;;
+		esac
+
 		count=$(( $count + 1 ))
 	done
 
@@ -121,16 +150,18 @@ do
 			command=$arg
 		;;
 		"reset")
-			echo "# Version ${perf_stats}" > last_run.csv
+			patched=`echo ${perf_stats}|sed 's/misses/misses miss-%/g'`
+			echo "# Version ${patched} insn/cycle" > last_run.csv
 
 		;;
 		"graph")
 			cmd=$( plot_command )
 			echo "'$cmd'"
-			gnuplot -p -e "$cmd"
+			gnuplot -p -e "set termoption enhanced; set terminal x11 font 'Verdana,10'; $cmd"
 		;;
 		"image")
-			gnuplot -p -e "set output 'output.gif'; set terminal gif; plot '< sort -k1 last_run.csv' ${plot_post_args}"
+			cmd=$( plot_command )
+			gnuplot -p -e "set output 'output.png'; set terminal png small size 1000,1000; ${cmd}"
 		;;
 		*)
 			case $command in
